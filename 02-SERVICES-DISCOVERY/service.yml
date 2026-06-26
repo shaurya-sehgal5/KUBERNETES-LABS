@@ -8,7 +8,7 @@ spec:
   selector:
     app: sample-python-app
 
-  type: NodePort
+  type: LoadBalancer
 
   ports:
     - protocol: TCP
