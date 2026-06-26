@@ -1,15 +1,15 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/K8s%20Lab-02-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white"/>
+<img src="https://img.shields.io/badge/K8s%20Lab-01-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white"/>
 <img src="https://img.shields.io/badge/Pods-Deployments-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white"/>
 <img src="https://img.shields.io/badge/ReplicaSet-Self--Healing-28a745?style=for-the-badge&logo=kubernetes&logoColor=white"/>
 <img src="https://img.shields.io/badge/Status-Complete-28a745?style=for-the-badge"/>
 
-# ☸️ K8s Lab 02 — Pods, Deployments & ReplicaSets
+# ☸️ K8s Lab 01 — Pods, Deployments & ReplicaSets
 
 ### From a single container to a self-healing, replicated workload. The core Kubernetes mental model — built and broken on purpose.
 
-[← K8s Lab 01: EKS + ALB](../01-EKS-ALB-Ingress/) | [Back to Lab Index](../README.md)
+| [Back to Lab Index](../README.md)
 
 </div>
 
