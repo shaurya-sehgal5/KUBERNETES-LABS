@@ -1,104 +1,70 @@
 #!/bin/bash
-
 # ==========================================
-# Kubernetes Lab 03
-# ConfigMaps & Secrets
+# K8s Lab 03 — ConfigMaps & Secrets
 # ==========================================
 
-# Verify Cluster
-
+# ------------------------------------------
+# 1. Verify Cluster
+# ------------------------------------------
 kubectl cluster-info
-
 kubectl get nodes
 
 # ------------------------------------------
-# Create ConfigMap
+# 2. ConfigMap
 # ------------------------------------------
-
 kubectl apply -f cm.yml
-
-# Verify ConfigMap
-
 kubectl get configmap
-
 kubectl describe configmap test-cm
 
 # ------------------------------------------
-# Deploy Application
+# 3. Deploy Application
 # ------------------------------------------
-
 kubectl apply -f deployment.yml
-
-# Verify Deployment
-
-kubectl get deployment
-
+kubectl get deployments
 kubectl get pods
 
-kubectl get pods -w
-
 # ------------------------------------------
-# Login to Pod
+# 4. Verify Env Var Inside Pod
 # ------------------------------------------
-
 kubectl exec -it <pod-name> -- /bin/bash
+# Inside pod:
+env | grep DB
+# Expected: DB_PORT=3306
 
-# Verify Environment Variable
-
+# ------------------------------------------
+# 5. Update ConfigMap & Check Stale Env Var
+# ------------------------------------------
+vim cm.yml
+kubectl apply -f cm.yml
+kubectl describe configmap test-cm
+# Exec back in — env var still shows old value (needs pod restart)
+kubectl exec -it <pod-name> -- /bin/bash
 env | grep DB
 
-# Expected Output:
-# DB_PORT=3306
-
 # ------------------------------------------
-# Update ConfigMap
+# 6. Verify Volume Mount (auto-updates)
 # ------------------------------------------
-
-vim cm.yml
-
-kubectl apply -f cm.yml
-
-# Verify ConfigMap
-
-kubectl describe configmap test-cm
-
-# ------------------------------------------
-# Verify Mounted Files
-# ------------------------------------------
-
 kubectl exec -it <pod-name> -- /bin/bash
-
-cd /opt
-
-ls
-
-cat db-port
+# Inside pod:
+cat /opt/db-port
+# After ConfigMap update, value refreshes here without restart
 
 # ------------------------------------------
-# Create Secret
+# 7. Secret
 # ------------------------------------------
-
 kubectl create secret generic test-secret \
---from-literal=db-port="3307"
-
-# Verify Secret
+  --from-literal=db-port="3307"
 
 kubectl get secret
+kubectl describe secret test-secret  # shows byte count, not value
+kubectl edit secret test-secret      # shows Base64 encoded value
 
-kubectl describe secret test-secret
-
-kubectl edit secret test-secret
-
-# Decode Secret
-
+# Decode the Base64 value
 echo "<base64-value>" | base64 --decode
 
 # ------------------------------------------
-# Cleanup
+# 8. Cleanup
 # ------------------------------------------
-
 kubectl delete deployment python-web-app
-
 kubectl delete configmap test-cm
-
 kubectl delete secret test-secret
