@@ -1,133 +1,138 @@
 #!/bin/bash
-
 # ==========================================
-# Kubernetes Lab 04
-# Prometheus & Grafana Monitoring
+# K8s Lab 04 — Prometheus & Grafana
 # ==========================================
 
-# Verify Cluster
-
+# ------------------------------------------
+# 1. Verify Cluster
+# ------------------------------------------
 kubectl cluster-info
-
 kubectl get nodes
 
 # ------------------------------------------
-# Install Helm
+# 2. Install Helm
 # ------------------------------------------
-
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-# Verify Helm
-
 helm version
 
 # ------------------------------------------
-# Create Monitoring Namespace
+# 3. Create Monitoring Namespace
 # ------------------------------------------
-
 kubectl create namespace monitoring
 
-# ------------------------------------------
-# Add Prometheus Community Repository
-# ------------------------------------------
+# Note: always isolate monitoring from app workloads
 
+# ------------------------------------------
+# 4. Add Prometheus Helm Repo
+# ------------------------------------------
 helm repo add prometheus-community \
-https://prometheus-community.github.io/helm-charts
+  https://prometheus-community.github.io/helm-charts
 
 helm repo update
 
 # ------------------------------------------
-# Install kube-prometheus-stack
+# 5. Install kube-prometheus-stack
 # ------------------------------------------
+# Installs: Prometheus + Grafana + Alertmanager
+#           + kube-state-metrics + Node Exporter
 
 helm install prometheus prometheus-community/kube-prometheus-stack \
--n monitoring
+  -n monitoring
 
 # ------------------------------------------
-# Verify Installation
+# 6. Verify Installation
 # ------------------------------------------
-
 kubectl get pods -n monitoring
-
 kubectl get svc -n monitoring
 
-# ------------------------------------------
-# Port Forward Prometheus
-# ------------------------------------------
+# All pods should show READY and STATUS=Running
+# Expected pods:
+#   alertmanager-prometheus-kube-prometheus-alertmanager
+#   prometheus-grafana
+#   prometheus-kube-prometheus-operator
+#   prometheus-kube-state-metrics
+#   prometheus-prometheus-node-exporter
+#   prometheus-prometheus-kube-prometheus-prometheus
 
+# ------------------------------------------
+# 7. Get Grafana Admin Password
+# ------------------------------------------
+kubectl get secret \
+  -n monitoring \
+  prometheus-grafana \
+  -o jsonpath="{.data.admin-password}" | base64 --decode
+
+# Username: admin
+# Password: <output from above command>
+
+# ------------------------------------------
+# 8. Port Forward — Prometheus
+# ------------------------------------------
 kubectl port-forward \
--n monitoring \
-svc/prometheus-kube-prometheus-prometheus \
-9090:9090
+  -n monitoring \
+  svc/prometheus-kube-prometheus-prometheus \
+  9090:9090
 
-# Open Browser
-
-http://localhost:9090
+# Access: http://localhost:9090
 
 # ------------------------------------------
-# Port Forward Grafana
+# 9. Port Forward — Grafana
 # ------------------------------------------
-
 kubectl port-forward \
--n monitoring \
-svc/prometheus-grafana \
-3000:80
+  -n monitoring \
+  svc/prometheus-grafana \
+  3000:80
 
-# Open Browser
-
-http://localhost:3000
+# Access: http://localhost:3000
 
 # ------------------------------------------
-# SSH Local Port Forwarding
-# (Run from your Windows Machine)
+# 10. SSH Tunnel (run from Windows machine)
 # ------------------------------------------
+# Required when cluster is on a remote EC2 instance
+# Tunnels EC2 localhost ports to your local machine
 
 ssh -i "C:\Users\shaur\Downloads\neww.pem" ^
--L 9090:localhost:9090 ^
--L 3000:localhost:3000 ^
-ubuntu@<EC2-PUBLIC-IP>
+  -L 9090:localhost:9090 ^
+  -L 3000:localhost:3000 ^
+  ubuntu@<EC2-PUBLIC-IP>
+
+# After this — Prometheus and Grafana accessible on your local browser
 
 # ------------------------------------------
-# Grafana
+# 11. Import Grafana Dashboard
 # ------------------------------------------
+# Grafana → Dashboards → Import → ID: 15757 → Load
+# Data source: Prometheus → Import
 
-# Login
-
-Username: admin
-
-Password:
-
-kubectl get secret \
--n monitoring \
-prometheus-grafana \
--o jsonpath="{.data.admin-password}" | base64 --decode
+# Dashboard 15757 shows:
+#   → Node CPU & Memory usage
+#   → Pod status across namespaces
+#   → Cluster resource utilization
+#   → Network I/O
 
 # ------------------------------------------
-# Import Dashboard
+# 12. Useful PromQL Queries (in Prometheus UI)
 # ------------------------------------------
+# CPU usage per node:
+# 100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
 
-Dashboard ID
+# Total running pods:
+# count(kube_pod_status_phase{phase="Running"})
 
-15757
+# Memory usage per pod:
+# container_memory_usage_bytes{namespace="default"}
 
 # ------------------------------------------
-# Useful Commands
+# 13. Debug Commands
 # ------------------------------------------
-
 kubectl get all -n monitoring
-
 kubectl describe pod <pod-name> -n monitoring
-
 kubectl logs <pod-name> -n monitoring
-
 kubectl get configmap -n monitoring
-
 kubectl get secret -n monitoring
 
 # ------------------------------------------
-# Uninstall Stack
+# 14. Cleanup
 # ------------------------------------------
-
 helm uninstall prometheus -n monitoring
-
 kubectl delete namespace monitoring
