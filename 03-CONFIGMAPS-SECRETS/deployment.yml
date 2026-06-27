@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: python-web-app
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: python-web-app
+
+  template:
+    metadata:
+      labels:
+        app: python-web-app
+
+    spec:
+      containers:
+        - name: python-web-app
+          image: python-web-app:v1
+          imagePullPolicy: Never
+
+          volumeMounts:
+            - name: db-vol
+              mountPath: /opt
+
+          ports:
+            - containerPort: 8000
+
+      volumes:
+        - name: db-vol
+          configMap:
+            name: test-cm
