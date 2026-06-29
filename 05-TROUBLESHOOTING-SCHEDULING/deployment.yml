@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: nginx
+
+  template:
+    metadata:
+      labels:
+        app: nginx
+
+    spec:
+
+      # Uncomment for Private Docker Images
+      # imagePullSecrets:
+      # - name: dockerhub-secret
+
+      # Uncomment for Node Selector
+      # nodeSelector:
+      #   node-name: arm-worker
+
+      # Uncomment for Node Affinity
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #       - matchExpressions:
+      #         - key: node-name
+      #           operator: In
+      #           values:
+      #           - arm-worker
+
+      containers:
+      - name: nginx
+
+        # ----------------------------
+        # Scenario 1
+        # Valid Image
+        # ----------------------------
+        image: nginx:latest
+
+        # ----------------------------
+        # Scenario 2
+        # Invalid Image
+        # Uncomment to simulate
+        # image: nginx:ninja
+        # ----------------------------
+
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 80
+
+        # ----------------------------
+        # Scenario 3
+        # CrashLoopBackOff
+        # Uncomment below
+        # ----------------------------
+        # command:
+        # - /bin/bash
+        # - -c
+        # - invalid-command
+
+        # ----------------------------
+        # Scenario 4
+        # OOMKilled
+        # Uncomment below
+        # ----------------------------
+        # resources:
+        #   requests:
+        #     cpu: "100m"
+        #     memory: "64Mi"
+        #
+        #   limits:
+        #     cpu: "200m"
+        #     memory: "128Mi"
+
+        # ----------------------------
+        # Scenario 5
+        # Liveness Probe Failure
+        # Uncomment below
+        # ----------------------------
+        # livenessProbe:
+        #   httpGet:
+        #     path: /wrong-path
+        #     port: 80
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 5
